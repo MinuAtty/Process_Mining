@@ -1,0 +1,62 @@
+# Load the dataset from a CSV file
+dataset <- read.csv("C:\\Users\\Minusha Attygala\\OneDrive\\Documents\\R\\2nd Semester\\Process Mining\\Insurance_claims_event_log.csv")
+
+# Display the structure of the dataset
+str(dataset)
+
+# Install required packages if not already installed
+#install.packages("bupaR")
+#install.packages("eventdataR")
+#install.packages("processmapR")
+#install.packages("edeaR")
+
+# Load necessary libraries
+
+# bupaR: Business Process Analysis in R
+# - Provides tools and methods for analyzing and visualizing business processes.
+library(bupaR)
+
+# eventdataR: Event Data Handling in R
+# - Offers functions for handling event data, including importing, transforming, and analyzing event logs.
+library(eventdataR)
+
+# processmapR: Process Map Visualization in R
+# - Enables the creation of process maps, which visually represent the flow of activities and transitions in a process.
+library(processmapR)
+
+# edeaR: Exploratory and Descriptive Event-Based Data Analysis in R
+# - Facilitates exploratory and descriptive analysis of event-based data, particularly useful for understanding the behavior of processes.
+library(edeaR)
+
+
+# Convert the timestamp column to POSIXct format (date-time)
+dataset$timestamp <- as.POSIXct(dataset$timestamp, format="%Y-%m-%d %H:%M:%OS")
+
+# Display the current data in a tabular format 
+View(dataset)
+
+# For data manipulation
+library(dplyr)
+
+# Arrange the dataset by case_id and timestamp, then group by case_id
+# Create a new column 'activity_instance_id' by concatenating case_id, activity_name, and row_number
+dataset <- dataset %>%
+  arrange(case_id,timestamp) %>%
+  group_by(case_id) %>%
+  mutate(activity_instance_id = paste(case_id,activity_name, row_number(), sep="_")) %>%
+  ungroup()
+
+# Set 'resource_id' column to "NA"
+dataset$resource_id <- "NA" 
+
+# Create an event log object from the dataset, specifying columns for case_id, activity_name, timestamp, user_type, resource_id, and activity_instance_id
+event_log <- eventlog(dataset,
+                      case_id = "case_id",
+                      activity_id = "activity_name",
+                      timestamp = "timestamp",
+                      lifecycle_id = "user_type",
+                      resource_id = "resource_id",
+                      activity_instance_id = "activity_instance_id")
+
+# Generate a process map from the event log, with performance metrics calculated using median
+process_map(event_log, performance(median))
